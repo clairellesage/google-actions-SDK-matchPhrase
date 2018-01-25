@@ -1,0 +1,25 @@
+{
+  "actions": [
+    {
+      "description": "Default Welcome Intent",
+      "name": "MAIN",
+      "fulfillment": {
+        "conversationName": "convo1"
+      },
+      "intent": {
+        "name": "actions.intent.MAIN",
+        "trigger": {
+          "queryPatterns": [
+            "talk to Matchphrase"
+          ]
+        }
+      }
+    }
+  ],
+  "conversations": {
+    "convo1": {
+      "name": "convo1",
+      "url": "https://c1251896.ngrok.io"
+    }
+  }
+}
