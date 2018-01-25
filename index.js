@@ -3,8 +3,8 @@ const bodyParser = require('body-parser');
 const googleActions = require('actions-on-google');
 const db = require('./db');
 
-const count = 999;
-const clues = [];
+let clues = [];
+let count = 999;
 
 let ActionsSdkAssistant = googleActions.ActionsSdkApp;
 
@@ -30,26 +30,30 @@ app.listen(8080, () => {
 });
 
 let getClues = function(){
-  var dbClues = db.getClues()
-  .then(function(res){
+  return new Promise(function(resolve, reject){
+    let orderedClues = [];
+    db.getClues()
+    .then(function(res){
     res.forEach(function(clue){
-      clues.push(clue)
+      orderedClues.push(clue);
+    })
+    resolve(orderedClues);
     })
   })
 }
 
 let shuffle = function(array) {
-  let currentIndex = array.length, temporaryValue, randomIndex;
-  while (0 !== currentIndex) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    // swap random index with current element
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
-  return array;
+  return new Promise(function(resolve, reject){
+    let counter = array.length;
+    while (counter > 0) {
+      let index = Math.floor(Math.random() * counter);
+      counter--;
+      let temp = array[counter];
+      array[counter] = array[index];
+      array[index] = temp;
+    }
+    resolve(array);
+  })
 }
 
 let cluesHandler = function(assistant){
@@ -83,12 +87,15 @@ let passHandler = function(assistant){
 }
 
 let mainHandler = function (assistant) {
+  console.log("Starting main handler")
   getClues()
   .then(function(orderedClues){
+    console.log("Shuffling clues from db: ", orderedClues);
     clues = shuffle(orderedClues);
     return clues;
   })
   .then(function(clues){
+    console.log("Got shuffled clues from db: ", clues);
     count = clues.length - 1;
     assistant.data.prompt = clues[0].prompt;
     assistant.data.answer = clues[0].answer;
