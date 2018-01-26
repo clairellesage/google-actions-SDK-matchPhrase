@@ -78,17 +78,14 @@ let cluesHandler = function(assistant){
 let mainHandler = function (assistant) {
   getClues()
   .then(function(orderedClues){
-    console.log("Shuffling clues from db: ", orderedClues);
     for (var c in clues){
       clues.pop(c);
     }
     var ordered = shuffle(orderedClues)
     clues.splice(0, clues.length, ...orderedClues)
-    console.log("Clues is here", clues)
     return clues;
   })
   .then(function(clues){
-    console.log("Got shuffled clues from db: ", clues);
     count = clues.length - 1;
     assistant.data.prompt = clues[0].prompt;
     assistant.data.answer = clues[0].answer;
