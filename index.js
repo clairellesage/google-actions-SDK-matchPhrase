@@ -25,8 +25,10 @@ app.post('/', (request, response) => {
     assistant.handleRequest(actionsMap);
 });
 
-app.listen(8080, () => {
-    console.log('app started listening on port', 8080);
+let port = process.env.PORT || 8080;
+
+app.listen(port, () => {
+    console.log('app started listening on port', port);
 });
 
 let getClues = function(){
