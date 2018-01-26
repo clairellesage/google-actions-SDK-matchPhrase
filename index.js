@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const googleActions = require('actions-on-google');
 const db = require('./db');
 
-let clues = [];
+const clues = [];
 let count = 999;
 
 let ActionsSdkAssistant = googleActions.ActionsSdkApp;
@@ -52,6 +52,7 @@ let shuffle = function(array) {
       array[counter] = array[index];
       array[index] = temp;
     }
+    console.log("Here's the array: ", array)
     resolve(array);
   })
 }
@@ -65,7 +66,7 @@ let cluesHandler = function(assistant){
       count--;
       assistant.ask(inputPrompt);
     } else {
-      let inputPrompt = assistant.buildInputPrompt(false, `Try this one. ${clues[count].prompt}`);
+      let inputPrompt = assistant.buildInputPrompt(false, `The answer is ${assistant.data.answer}. Try this one. ${clues[count].prompt}`);
       count--;
       assistant.ask(inputPrompt);
     }
@@ -74,24 +75,16 @@ let cluesHandler = function(assistant){
   }
 }
 
-let repeatHandler = function(assistant){
-  count -= 1;
-  let inputPrompt = assistant.buildInputPrompt(false, `${clues[count].prompt}`, ['please say your answer now']);
-  assistant.data.answer = clues[count].answer;
-  assistant.ask(inputPrompt);
-}
-
-let passHandler = function(assistant){
-  let inputPrompt = assistant.buildInputPrompt(false, `The answer is ${assistant.data.answer}.`, ['say next']);
-  assistant.ask(inputPrompt);
-}
-
 let mainHandler = function (assistant) {
-  console.log("Starting main handler")
   getClues()
   .then(function(orderedClues){
     console.log("Shuffling clues from db: ", orderedClues);
-    clues = shuffle(orderedClues);
+    for (var c in clues){
+      clues.pop(c);
+    }
+    var ordered = shuffle(orderedClues)
+    clues.splice(0, clues.length, ...orderedClues)
+    console.log("Clues is here", clues)
     return clues;
   })
   .then(function(clues){
@@ -99,27 +92,23 @@ let mainHandler = function (assistant) {
     count = clues.length - 1;
     assistant.data.prompt = clues[0].prompt;
     assistant.data.answer = clues[0].answer;
-    let inputPrompt = assistant.buildInputPrompt(false, `Pop quiz! Here's your first clue. ${clues[0].prompt}`, ['please say your answer now']);
+    let inputPrompt = assistant.buildInputPrompt(false, `Pop quiz! Here's your first clue. ${clues[0].prompt}`, [`What is ${clues[0].prompt}`]);
     assistant.ask(inputPrompt);
   })
 }
 
 let rawInput = function (assistant) {
-    let rawInput = assistant.getRawInput();
-    if (rawInput === 'exit') {
+    let userInput = assistant.getRawInput();
+    if (userInput === 'exit') {
       assistant.tell('Goodbye!')
-    } else if (rawInput.toLowerCase().trim() === assistant.data.answer) {
+    } else if (userInput.toLowerCase().trim() === assistant.data.answer) {
       assistant.data.correct = true;
       cluesHandler(assistant);
-    } else if (rawInput.toLowerCase().trim() === "pass") {
-      passHandler(assistant);
-    } else if (rawInput.toLowerCase().trim() === "repeat") {
-      repeat(assistant);
-    } else if (rawInput.toLowerCase().trim() === "next") {
+    } else if (userInput.toLowerCase().trim() === "next") {
       assistant.data.correct = false;
       cluesHandler(assistant);
     } else {
-      let inputPrompt = assistant.buildInputPrompt(false, `Hmm, ${rawInput}. I don't think that's the right answer. Try again!`);
+      let inputPrompt = assistant.buildInputPrompt(false, `Hmm, ${userInput}. I don't think that's the right answer. Try again or say 'next'!`);
       assistant.ask(inputPrompt);
     }
 }
